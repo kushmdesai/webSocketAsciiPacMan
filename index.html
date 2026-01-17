@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ASCII Pac-Man</title>
+  <style>
+    body {
+      font-family: monospace;
+      white-space: pre;
+      background-color: black;
+      color: yellow;
+      font-size: 16px;
+    }
+    pre { line-height: 1.1; }
+  </style>
+</head>
+<body>
+  <pre id="game"></pre>
+
+  <script>
+    const game = document.getElementById("game");
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${protocol}://${location.host}/ws`);
+
+    ws.onopen = () => console.log("WebSocket connected!");
+    ws.onclose = () => console.log("WebSocket closed!");
+    ws.onerror = (e) => console.log("WebSocket error", e);
+
+    ws.onmessage = (event) => {
+      if (event.data !== "ping") game.textContent = event.data;
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") ws.send("up");
+      if (e.key === "ArrowDown") ws.send("down");
+      if (e.key === "ArrowLeft") ws.send("left");
+      if (e.key === "ArrowRight") ws.send("right");
+    });
+  </script>
+</body>
+</html>
