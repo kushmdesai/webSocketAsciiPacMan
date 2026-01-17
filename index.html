@@ -1,40 +1,469 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ASCII Pac-Man</title>
+  <title>ASCII Pac-Man Multiplayer - Full Featured</title>
   <style>
     body {
       font-family: monospace;
       white-space: pre;
-      background-color: black;
-      color: yellow;
+      background-color: #000000;
+      color: #FFFF00;
       font-size: 16px;
+      margin: 0;
+      padding: 20px;
     }
-    pre { line-height: 1.1; }
+    #lobby, #gameScreen {
+      display: none;
+    }
+    #players {
+      margin-top: 10px;
+      color: #00FFFF;
+    }
+    #scores {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #info {
+      margin-top: 10px;
+      color: #FFA500;
+      font-weight: bold;
+    }
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 14px;
+      background-color: #333;
+      color: white;
+      border: 1px solid #666;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Pac-Man Characters */
+    .pacman { 
+      color: #00FF00; 
+      font-weight: bold;
+      text-shadow: 0 0 5px #00FF00;
+    }
+    .pacman-powered { 
+      color: #00FFFF; 
+      font-weight: bold;
+      text-shadow: 0 0 15px #00FFFF, 0 0 25px #00FFFF;
+      animation: pulse 0.5s infinite;
+    }
+    .pacman-flashing {
+      animation: flash 0.3s infinite;
+    }
+    
+    /* Player Ghosts */
+    .ghost { 
+      color: #FF0000;
+      font-weight: bold;
+      text-shadow: 0 0 5px #FF0000;
+    }
+    .ghost-scared {
+      color: #4169E1;
+      font-weight: bold;
+      text-shadow: 0 0 5px #4169E1;
+      animation: shake 0.3s infinite;
+    }
+    
+    /* AI Ghosts */
+    .ai-ghost { 
+      color: #FF00FF;
+      font-weight: bold;
+      text-shadow: 0 0 5px #FF00FF;
+    }
+    .ai-ghost-scared {
+      color: #4169E1;
+      font-weight: bold;
+      text-shadow: 0 0 5px #4169E1;
+      animation: shake 0.3s infinite;
+    }
+    
+    /* Fruits */
+    .fruit {
+      color: #FF6347;
+      font-weight: bold;
+      text-shadow: 0 0 10px #FF6347, 0 0 20px #FFA500;
+      animation: fruitPulse 1s infinite;
+    }
+    
+    /* Pellets */
+    .pellet { 
+      color: #FFD700;
+      font-weight: bold;
+    }
+    .power-pellet {
+      color: #FFFFFF;
+      font-weight: bold;
+      text-shadow: 0 0 8px #FFFFFF, 0 0 15px #00FFFF;
+      animation: powerBlink 0.5s infinite;
+    }
+    
+    /* Walls */
+    .wall {
+      color: #0000FF;
+      font-weight: bold;
+      text-shadow: 0 0 3px #0000FF;
+    }
+    
+    /* Ghost Pen */
+    .ghost-pen {
+      color: #8B008B;
+      font-weight: bold;
+    }
+    
+    /* Tunnels */
+    .tunnel {
+      color: #006400;
+      font-weight: bold;
+    }
+    
+    /* Empty Space */
+    .space {
+      color: #1a1a1a;
+    }
+    
+    /* Animations */
+    @keyframes pulse {
+      0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+      }
+      50% { 
+        opacity: 0.8; 
+        transform: scale(1.1);
+      }
+    }
+    
+    @keyframes fruitPulse {
+      0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% { 
+        opacity: 0.7;
+        transform: scale(1.2);
+      }
+    }
+    
+    @keyframes flash {
+      0%, 40% { opacity: 1; }
+      41%, 80% { opacity: 0.2; }
+      81%, 100% { opacity: 1; }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(-2px) rotate(-5deg); }
+      75% { transform: translateX(2px) rotate(5deg); }
+    }
+    
+    @keyframes powerBlink {
+      0%, 50% { 
+        opacity: 1;
+        text-shadow: 0 0 8px #FFFFFF, 0 0 15px #00FFFF;
+      }
+      51%, 100% { 
+        opacity: 0.6;
+        text-shadow: 0 0 4px #FFFFFF, 0 0 8px #00FFFF;
+      }
+    }
+    
+    #status {
+      color: #FF4500;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #roleInfo {
+      color: #00FFFF;
+      margin-top: 10px;
+    }
+    #gameInfo {
+      color: #00FF7F;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      text-shadow: 0 0 5px #00FF7F;
+    }
+    #restartBtn {
+      margin-top: 20px;
+      background-color: #228B22;
+      color: white;
+      font-weight: bold;
+      padding: 10px 20px;
+      border: 2px solid #32CD32;
+      text-shadow: 0 0 5px #000;
+    }
+    #restartBtn:hover {
+      background-color: #32CD32;
+      box-shadow: 0 0 10px #32CD32;
+    }
+    
+    /* Score styling */
+    #scores {
+      background-color: #0a0a0a;
+      padding: 10px;
+      border: 2px solid #333;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    
+    /* Game board container */
+    #game {
+      background-color: #000000;
+      padding: 10px;
+      border: 3px solid #0000FF;
+      border-radius: 5px;
+      box-shadow: 0 0 20px rgba(0, 0, 255, 0.5);
+      line-height: 1.2;
+    }
   </style>
 </head>
 <body>
-  <pre id="game"></pre>
+  <div id="lobby">
+    <h2 style="color: #FF00FF; text-shadow: 0 0 10px #FF00FF;">🎮 Pac-Man Multiplayer Lobby 🎮</h2>
+    <ul id="players"></ul>
+    <button id="pacmanBtn" onclick="chooseRole('Pac-Man')" style="background-color: #006400; border-color: #00FF00;">
+      🟢 Play as Pac-Man
+    </button>
+    <button id="ghostBtn" onclick="chooseRole('Ghost')" style="background-color: #8B0000; border-color: #FF0000;">
+      👻 Play as Ghost
+    </button>
+    <p id="roleInfo">Need 1 Pac-Man per 4 Ghosts to start!</p>
+    <p id="status"></p>
+  </div>
+
+  <div id="gameScreen">
+    <div id="gameInfo">
+      ⚡ Power Pellet (@): Eat ghosts for 10s! | 🍒 Fruits: Bonus points! | ❤️ Lives: 3 | 🎯 Eat all pellets to win!
+    </div>
+    <pre id="game"></pre>
+    <div id="scores"></div>
+    <div id="info"></div>
+    <button id="restartBtn" style="display:none;" onclick="restartGame()">🔄 Play Again</button>
+  </div>
 
   <script>
-    const game = document.getElementById("game");
+    const lobbyDiv = document.getElementById("lobby");
+    const playersUl = document.getElementById("players");
+    const statusP = document.getElementById("status");
+    const roleInfoP = document.getElementById("roleInfo");
+    const gameDiv = document.getElementById("game");
+    const scoresDiv = document.getElementById("scores");
+    const infoDiv = document.getElementById("info");
+    const gameScreen = document.getElementById("gameScreen");
+    const pacmanBtn = document.getElementById("pacmanBtn");
+    const ghostBtn = document.getElementById("ghostBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    lobbyDiv.style.display = "block";
+
     const protocol = location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${protocol}://${location.host}/ws`);
+    const wsLobby = new WebSocket(`${protocol}://${location.host}/lobby`);
+    let wsGame = null;
+    let sessionId = null;
 
-    ws.onopen = () => console.log("WebSocket connected!");
-    ws.onclose = () => console.log("WebSocket closed!");
-    ws.onerror = (e) => console.log("WebSocket error", e);
+    // AI ghost characters
+    const AI_GHOSTS = ['B', 'P', 'I', 'C'];
+    // Fruit characters
+    const FRUITS = ['C', 'S', 'O', 'A', 'M'];
 
-    ws.onmessage = (event) => {
-      if (event.data !== "ping") game.textContent = event.data;
+    wsLobby.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.error) {
+        statusP.textContent = data.error;
+        return;
+      }
+
+      if (data.session_id) {
+        sessionId = data.session_id;
+      }
+
+      if (data.lobby) {
+        playersUl.innerHTML = "";
+        data.lobby.forEach(p => {
+          let roleText = p.role || "Choosing...";
+          let roleColor = p.role === "Pac-Man" ? "#00FF00" : p.role === "Ghost" ? "#FF0000" : "#FFFF00";
+          playersUl.innerHTML += `<li>${p.name} - <span style="color: ${roleColor}; font-weight: bold;">${roleText}</span></li>`;
+        });
+        
+        if (data.roles_taken) {
+          roleInfoP.textContent = `Current: ${data.roles_taken["Pac-Man"]} Pac-Man, ${data.roles_taken["Ghost"]} Ghosts (Need 1:4 ratio)`;
+        }
+      }
+
+      if (data.can_select_pacman !== undefined) {
+        pacmanBtn.disabled = !data.can_select_pacman;
+      }
+      if (data.can_select_ghost !== undefined) {
+        ghostBtn.disabled = !data.can_select_ghost;
+      }
+
+      if (data.start_game) {
+        lobbyDiv.style.display = "none";
+        gameScreen.style.display = "block";
+        startGame();
+      }
     };
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowUp") ws.send("up");
-      if (e.key === "ArrowDown") ws.send("down");
-      if (e.key === "ArrowLeft") ws.send("left");
-      if (e.key === "ArrowRight") ws.send("right");
-    });
+    function chooseRole(role) {
+      wsLobby.send(JSON.stringify({role}));
+      statusP.textContent = "";
+    }
+
+    function startGame() {
+      wsGame = new WebSocket(`${protocol}://${location.host}/ws/${sessionId}`);
+
+      wsGame.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === "ping") return;
+        
+        if (data.type === "game_state") {
+          const boardText = data.board;
+          const powerStatus = data.power_status || {};
+          
+          // Determine which characters are what
+          const poweredPacmen = new Set();
+          const flashingPacmen = new Set();
+          const anyPowerMode = Object.values(powerStatus).some(ps => ps.powered);
+          
+          Object.entries(powerStatus).forEach(([char, ps]) => {
+            if (ps.powered) {
+              poweredPacmen.add(char);
+              if (ps.flashing) {
+                flashingPacmen.add(char);
+              }
+            }
+          });
+
+          // Color the board with EVERYTHING colored
+          let coloredBoard = boardText.split("\n").map(line => {
+            return line.split("").map(char => {
+              // Walls
+              if (char === '#') {
+                return `<span class="wall">#</span>`;
+              }
+              // Power pellets
+              if (char === '@') {
+                return `<span class="power-pellet">@</span>`;
+              }
+              // Regular pellets
+              if (char === '.') {
+                return `<span class="pellet">•</span>`;
+              }
+              // Fruits
+              if (FRUITS.includes(char)) {
+                return `<span class="fruit">${char}</span>`;
+              }
+              // Ghost pen
+              if (char === 'G') {
+                return `<span class="ghost-pen">▓</span>`;
+              }
+              // Tunnels
+              if (char === 'T') {
+                return `<span class="tunnel">░</span>`;
+              }
+              // Dashes (ghost pen doors)
+              if (char === '-') {
+                return `<span class="ghost-pen">─</span>`;
+              }
+              // Spaces
+              if (char === ' ') {
+                return '<span class="space"> </span>';
+              }
+              
+              // AI Ghosts
+              if (AI_GHOSTS.includes(char)) {
+                if (anyPowerMode) {
+                  return `<span class="ai-ghost-scared">${char}</span>`;
+                }
+                return `<span class="ai-ghost">${char}</span>`;
+              }
+              
+              // Player characters - need to check scores to determine role
+              const match = data.scores.split('\n').find(s => s.startsWith(char + ":"));
+              if (match) {
+                if (match.includes("Pac-Man")) {
+                  if (poweredPacmen.has(char)) {
+                    const cls = flashingPacmen.has(char) ? "pacman-powered pacman-flashing" : "pacman-powered";
+                    return `<span class="${cls}">${char}</span>`;
+                  }
+                  return `<span class="pacman">${char}</span>`;
+                }
+                if (match.includes("Ghost")) {
+                  if (anyPowerMode) {
+                    return `<span class="ghost-scared">${char}</span>`;
+                  }
+                  return `<span class="ghost">${char}</span>`;
+                }
+              }
+              
+              return char;
+            }).join("");
+          }).join("\n");
+
+          gameDiv.innerHTML = coloredBoard;
+          
+          // Color the scores
+          let coloredScores = data.scores.split('\n').map(line => {
+            if (line.includes('Pac-Man')) {
+              if (line.includes('POWERED')) {
+                return `<span style="color: #00FFFF; font-weight: bold; text-shadow: 0 0 10px #00FFFF;">${line}</span>`;
+              }
+              return `<span style="color: #00FF00; font-weight: bold;">${line}</span>`;
+            } else if (line.includes('Ghost')) {
+              return `<span style="color: #FF0000; font-weight: bold;">${line}</span>`;
+            }
+            return line;
+          }).join('<br>');
+          
+          scoresDiv.innerHTML = coloredScores;
+          infoDiv.innerHTML = data.info.replace(/\n/g, '<br>');
+          
+          // Show restart button if game over
+          if (data.game_over) {
+            restartBtn.style.display = "block";
+          } else {
+            restartBtn.style.display = "none";
+          }
+        }
+      };
+
+      wsGame.onopen = () => console.log("Game connection open!");
+      wsGame.onclose = () => console.log("Game connection closed!");
+      wsGame.onerror = (e) => console.log("WebSocket error", e);
+
+      document.addEventListener("keydown", (e) => {
+        if (!wsGame) return;
+        let direction = null;
+        switch(e.key) {
+          case "ArrowUp": direction = "up"; break;
+          case "ArrowDown": direction = "down"; break;
+          case "ArrowLeft": direction = "left"; break;
+          case "ArrowRight": direction = "right"; break;
+        }
+        if (direction) {
+          wsGame.send(JSON.stringify({type: "move", direction}));
+          e.preventDefault();
+        }
+      });
+    }
+
+    function restartGame() {
+      if (wsGame) {
+        wsGame.send(JSON.stringify({type: "restart"}));
+      }
+    }
   </script>
 </body>
 </html>
